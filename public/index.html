@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amigo Secreto</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons (CORREÇÃO: 'defer' AGORA VAI DE VERDADE) -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide-static@latest/dist/lucide.min.js"></script>
+    
+    <style>
+        /* Fonte Inter (Padrão do Tailwind) */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Loader customizado */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Esconde os ícones até o Lucide carregá-los */
+        [data-lucide] {
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        /* Oculta/mostra campos de formulário */
+        .form-hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex items-center justify-center p-4">
+
+    <!-- Container Principal -->
+    <div class="bg-white w-full max-w-lg p-6 sm:p-8 rounded-2xl shadow-xl">
+
+        <!-- 1. Tela de Carregamento (Padrão) -->
+        <div id="loading-screen" class="text-center py-12">
+            <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p class="mt-4 text-gray-600">Carregando...</p>
+        </div>
+
+        <!-- 2. Tela de Login/Cadastro (Escondida) -->
+        <div id="auth-screen" class="hidden">
+            <!-- Título muda baseado no modo -->
+            <h1 id="auth-title" class="text-3xl font-bold text-blue-600 mb-6 text-center">Entrar</h1>
+            
+            <form id="auth-form">
+                <!-- Campo de Nome (só no cadastro) -->
+                <div id="name-field-group" class="mb-4 form-hidden">
+                    <label for="name-input" class="block text-sm font-medium text-gray-700 mb-2">Qual é o seu nome?</label>
+                    <input type="text" id="name-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Seu nome de exibição">
+                </div>
+
+                <!-- Campos de Email e Senha (sempre visíveis) -->
+                <div class="mb-4">
+                    <label for="email-input" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="email-input" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="seu@email.com">
+                </div>
+
+                <div class="mb-6">
+                    <label for="password-input" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                    <input type="password" id="password-input" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Mínimo 6 caracteres">
+                </div>
+                
+                <p id="auth-error-message" class="text-red-500 text-center mb-4"></p>
+
+                <!-- Botão de Ação (muda o texto) -->
+                <button id="auth-action-button" type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition duration-200">
+                    <span>Entrar</span>
+                </button>
+            </form>
+
+            <!-- Botão para alternar modo -->
+            <button id="auth-toggle-button" class="w-full text-center text-sm text-blue-500 hover:underline mt-4">
+                Não tem conta? Crie uma
+            </button>
+        </div>
+
+        <!-- 3. Tela Inicial (Escondida) -->
+        <div id="home-screen" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-blue-600">Olá, <span id="user-name">Usuário</span>!</h1>
+                <button id="logout-button" title="Sair" class="text-gray-500 hover:text-red-500 transition-colors">
+                    <i data-lucide="log-out" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <p class="text-center mb-6 text-gray-600">Crie um novo grupo de Amigo Secreto ou insira o ID de um grupo para participar.</p>
+
+            <!-- Criar Novo Grupo -->
+            <div class="mb-6">
+                <label for="new-group-name" class="block text-sm font-medium text-gray-700 mb-2">Nome do Novo Grupo</label>
+                <div class="flex">
+                    <input type="text" id="new-group-name" class="flex-1 w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Amigos da Firma">
+                    <button id="create-group-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-r-lg">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Entrar em Grupo Existente -->
+            <div class="mb-6">
+                <label for="join-group-id" class="block text-sm font-medium text-gray-700 mb-2">Entrar com ID do Grupo</label>
+                <div class="flex">
+                    <input type="text" id="join-group-id" class="flex-1 w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cole o ID do grupo aqui">
+                    <button id="join-group-button" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-r-lg">
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <p id="home-error-message" class="text-red-500 text-center mb-4"></p>
+
+            <!-- ============================================= -->
+            <!-- NOVA SEÇÃO: Listas de Grupos                  -->
+            <!-- ============================================= -->
+            <div class="border-t pt-4">
+                <!-- Meus Grupos (Admin) -->
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold mb-3 text-gray-800">Meus Grupos (Admin)</h2>
+                    <ul id="admin-groups-list" class="space-y-2">
+                        <!-- Item de loading -->
+                        <li id="admin-groups-loading" class="text-gray-500 text-center py-2">Buscando...</li>
+                        <!-- Grupos serão adicionados aqui -->
+                    </ul>
+                </div>
+
+                <!-- Grupos que Participo -->
+                <div>
+                    <h2 class="text-xl font-semibold mb-3 text-gray-800">Grupos que Participo</h2>
+                    <ul id="participant-groups-list" class="space-y-2">
+                        <!-- Item de loading -->
+                        <li id="participant-groups-loading" class="text-gray-500 text-center py-2">Buscando...</li>
+                        <!-- Grupos serão adicionados aqui -->
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 4. Tela do Grupo (Escondida) -->
+        <div id="group-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <button id="back-to-home-button" title="Voltar" class="text-gray-500 hover:text-blue-500 transition-colors">
+                    <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                </button>
+                <h1 id="group-name-title" class="text-2xl font-bold text-blue-600 text-center truncate px-4">Nome do Grupo</h1>
+                <div class="w-6"></div> <!-- Espaçador -->
+            </div>
+
+            <!-- Card de Resultado do Sorteio -->
+            <div id="result-card" class="hidden bg-green-100 border-l-4 border-green-500 text-green-700 p-6 rounded-lg shadow-md text-center mb-6">
+                <h3 class="text-lg font-semibold mb-2">Sorteio realizado!</h3>
+                <p class="text-xl">
+                    Você tirou: <strong id="revealed-person" class="font-bold text-2xl">...</strong>
+                </p>
+            </div>
+            
+            <!-- Card de "Aguardando Sorteio" -->
+            <div id="waiting-card" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-6 rounded-lg shadow-md text-center mb-6">
+                <h3 class="text-lg font-semibold">Aguardando o sorteio...</h3>
+                <p class="mt-2">O dono do grupo ainda não realizou o sorteio.</p>
+            </div>
+
+            <!-- Lista de Participantes -->
+            <h2 class="text-xl font-semibold mb-3">Participantes (<span id="participant-count">0</span>)</h2>
+            <ul id="participant-list" class="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto divide-y divide-gray-200">
+                <!-- Participantes serão adicionados aqui via JS -->
+            </ul>
+
+            <!-- Botões de Ação -->
+            <div id="group-actions" class="mt-6">
+                <!-- Botão para participar -->
+                <button id="join-leave-button" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition duration-200 mb-4">
+                    <i data-lucide="user-plus" class="w-5 h-5 mr-2"></i>
+                    <span id="join-leave-text">Entrar no Grupo</span>
+                </button>
+                
+                <!-- Ações do Admin -->
+                <div id="admin-actions" class="hidden border-t pt-4 mt-4">
+                    <p class="text-sm text-gray-600 text-center mb-2 font-semibold">Você é o admin deste grupo.</p>
+                    
+                    <!-- NOVA SEÇÃO: Restrições -->
+                    <div id="restriction-section" class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Restrições</h3>
+                        <p class="text-sm text-gray-500 mb-3">Defina quem não pode tirar quem (ex: casais).</p>
+                        
+                        <div class="flex items-center space-x-2 mb-3">
+                            <select id="restriction-giver" class="flex-1 w-1/3 p-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="">Pessoa...</option>
+                            </select>
+                            <span class="text-gray-600">não pode tirar</span>
+                            <select id="restriction-receiver" class="flex-1 w-1/3 p-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="">...outra pessoa</option>
+                            </select>
+                            <button id="add-restriction-button" class="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg">
+                                <i data-lucide="plus" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        
+                        <ul id="restriction-list" class="text-sm text-gray-700 space-y-2">
+                            <!-- Lista de restrições virá aqui -->
+                        </ul>
+                    </div>
+                    
+                    <!-- Botão de Sortear -->
+                    <button id="draw-button" class="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition duration-200" disabled>
+                        <i data-lucide="gift" class="w-5 h-5 mr-2"></i>
+                        <span>Sortear (Mínimo 3 pessoas)</span>
+                    </button>
+                    <p id="draw-error" class="text-red-500 text-center text-sm mt-2"></p>
+                </div>
+            </div>
+
+            <!-- Info do Grupo (ID) -->
+            <div class="mt-6 border-t pt-4 text-center">
+                <p class="text-sm text-gray-600">Compartilhe este grupo:</p>
+                <input id="group-link-input" type="text" readonly class="w-full bg-gray-100 p-2 text-center rounded-lg text-sm text-gray-700 font-mono mt-2 cursor-pointer" title="Clique para copiar o link">
+                <p id="copied-message" class="text-green-500 text-sm mt-2 opacity-0 transition-opacity">Link copiado!</p>
+            </div>
+            
+            <p id="error-message" class="text-red-500 text-center mt-4"></p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Importar os módulos do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signOut,
+            updateProfile,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            setDoc, 
+            updateDoc,
+            arrayUnion,
+            arrayRemove,
+            onSnapshot, 
+            collection, 
+            addDoc,
+            setLogLevel,
+            query,         // <-- NOVO
+            where,         // <-- NOVO
+            getDocs        // <-- NOVO
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Configuração do Firebase ---
+        
+        // CONFIGURAÇÃO DO SEU PROJETO 'amigosecretoapp-e3f13'
+        const firebaseConfig = {
+            apiKey: "AIzaSyCRkBdAZtCTLWgtlwqYXdhcz9005avNMo4",
+            authDomain: "amigosecretoapp-e3f13.firebaseapp.com",
+            projectId: "amigosecretoapp-e3f13",
+            storageBucket: "amigosecretoapp-e3f13.firebasestorage.app",
+            messagingSenderId: "106950624156",
+            appId: "1:106950624156:web:723f297f4e90cb12e97e59",
+            measurementId: "G-P9X0K63MPS"
+        };
+
+        const appId = firebaseConfig.projectId || (typeof __app_id !== 'undefined' ? __app_id : 'default-app-id');
+
+        // Inicializar Firebase
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            setLogLevel('Debug'); 
+        } catch (error) {
+            console.error("Erro ao inicializar Firebase:", error);
+            document.getElementById('loading-screen').innerHTML = '<p class="text-red-500">Erro ao conectar ao Firebase. Verifique a configuração.</p>';
+        }
+
+        // --- Estado Global ---
+        let currentScreen = 'loading';
+        let currentUser = null;
+        let currentGroup = null;
+        let currentGroupListener = null; 
+        let isAuthReady = false; 
+        let isLoginMode = true; 
+        
+        // --- Referências do DOM ---
+        const screens = {
+            loading: document.getElementById('loading-screen'),
+            auth: document.getElementById('auth-screen'),
+            home: document.getElementById('home-screen'),
+            group: document.getElementById('group-screen')
+        };
+        
+        const authElements = {
+            authScreen: document.getElementById('auth-screen'),
+            authTitle: document.getElementById('auth-title'),
+            authForm: document.getElementById('auth-form'),
+            nameFieldGroup: document.getElementById('name-field-group'),
+            nameInput: document.getElementById('name-input'),
+            emailInput: document.getElementById('email-input'), 
+            passwordInput: document.getElementById('password-input'), 
+            authErrorMessage: document.getElementById('auth-error-message'),
+            authActionButton: document.getElementById('auth-action-button'),
+            authToggleButton: document.getElementById('auth-toggle-button'), 
+            logoutButton: document.getElementById('logout-button'),
+            userName: document.getElementById('user-name')
+        };
+
+        const homeElements = {
+            newGroupNameInput: document.getElementById('new-group-name'),
+            createGroupButton: document.getElementById('create-group-button'),
+            joinGroupIdInput: document.getElementById('join-group-id'),
+            joinGroupButton: document.getElementById('join-group-button'),
+            homeErrorMessage: document.getElementById('home-error-message'),
+            adminGroupsList: document.getElementById('admin-groups-list'), // <-- NOVO
+            participantGroupsList: document.getElementById('participant-groups-list'), // <-- NOVO
+            adminGroupsLoading: document.getElementById('admin-groups-loading'), // <-- NOVO
+            participantGroupsLoading: document.getElementById('participant-groups-loading') // <-- NOVO
+        };
+
+        const groupElements = {
+            backButton: document.getElementById('back-to-home-button'),
+            groupNameTitle: document.getElementById('group-name-title'),
+            participantList: document.getElementById('participant-list'),
+            participantCount: document.getElementById('participant-count'),
+            joinLeaveButton: document.getElementById('join-leave-button'),
+            joinLeaveText: document.getElementById('join-leave-text'),
+            adminActions: document.getElementById('admin-actions'),
+            drawButton: document.getElementById('draw-button'),
+            drawError: document.getElementById('draw-error'),
+            resultCard: document.getElementById('result-card'),
+            waitingCard: document.getElementById('waiting-card'),
+            revealedPerson: document.getElementById('revealed-person'),
+            groupLinkInput: document.getElementById('group-link-input'),
+            copiedMessage: document.getElementById('copied-message'),
+            errorMessage: document.getElementById('error-message'),
+            restrictionSection: document.getElementById('restriction-section'),
+            restrictionGiver: document.getElementById('restriction-giver'),
+            restrictionReceiver: document.getElementById('restriction-receiver'),
+            addRestrictionButton: document.getElementById('add-restriction-button'),
+            restrictionList: document.getElementById('restriction-list')
+        };
+
+        // --- Funções Principais ---
+
+        function showScreen(screenName) {
+            if (!screens[screenName]) return;
+            currentScreen = screenName;
+            
+            Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+            screens[screenName].classList.remove('hidden');
+            
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+        
+        // --- Lógica de Autenticação ---
+
+        onAuthStateChanged(auth, (user) => {
+            isAuthReady = true; 
+            if (user) {
+                currentUser = user;
+                authElements.userName.textContent = user.displayName || user.email; 
+                
+                const groupIdFromHash = window.location.hash.replace('#group=', '');
+                if (groupIdFromHash) {
+                    listenToGroup(groupIdFromHash); 
+                } else {
+                    // *** MUDANÇA: Carrega os grupos na tela inicial ***
+                    loadUserGroups(user); // Carrega as listas
+                    showScreen('home');   // Mostra a tela inicial
+                }
+            } else {
+                currentUser = null;
+                if(currentGroupListener) currentGroupListener(); 
+                window.location.hash = ''; 
+                
+                showScreen('auth'); 
+            }
+        });
+
+        function toggleAuthMode() {
+            // ... (código existente, sem mudanças) ...
+            isLoginMode = !isLoginMode;
+            authElements.authErrorMessage.textContent = ''; 
+            
+            if (isLoginMode) {
+                authElements.authTitle.textContent = "Entrar";
+                authElements.nameFieldGroup.classList.add('form-hidden');
+                authElements.authActionButton.querySelector('span').textContent = "Entrar";
+                authElements.authToggleButton.textContent = "Não tem conta? Crie uma";
+            } else {
+                authElements.authTitle.textContent = "Criar Conta";
+                authElements.nameFieldGroup.classList.remove('form-hidden');
+                authElements.authActionButton.querySelector('span').textContent = "Criar Conta";
+                authElements.authToggleButton.textContent = "Já tem conta? Entrar";
+            }
+        }
+        authElements.authToggleButton.onclick = toggleAuthMode;
+
+        authElements.authForm.onsubmit = async (e) => {
+            // ... (código existente, sem mudanças) ...
+            e.preventDefault(); 
+            
+            const name = authElements.nameInput.value.trim();
+            const email = authElements.emailInput.value.trim();
+            const password = authElements.passwordInput.value.trim();
+            
+            authElements.authErrorMessage.textContent = ''; 
+
+            try {
+                if (isLoginMode) {
+                    if (!email || !password) {
+                        authElements.authErrorMessage.textContent = "Email e senha são obrigatórios.";
+                        return;
+                    }
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    if (!name || !email || !password) {
+                        authElements.authErrorMessage.textContent = "Nome, email e senha são obrigatórios.";
+                        return;
+                    }
+                    if (password.length < 6) {
+                        authElements.authErrorMessage.textContent = "A senha deve ter no mínimo 6 caracteres.";
+                        return;
+                    }
+                    
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    await updateProfile(userCredential.user, { displayName: name });
+                    
+                    authElements.userName.textContent = name;
+                    
+                    currentUser = auth.currentUser; 
+                    if (currentUser) {
+                         currentUser.displayName = name;
+                    }
+                }
+            } catch (error) {
+                console.error("Erro de autenticação:", error);
+                authElements.authErrorMessage.textContent = parseFirebaseError(error);
+            }
+        };
+
+        function parseFirebaseError(error) {
+            // ... (código existente, sem mudanças) ...
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    return "Email inválido.";
+                case 'auth/user-not-found':
+                case 'auth/invalid-credential': 
+                    return "Email ou senha incorretos.";
+                case 'auth/wrong-password':
+                    return "Senha incorreta.";
+                case 'auth/email-already-in-use':
+                    return "Este email já está sendo usado.";
+                case 'auth/weak-password':
+                    return "A senha é muito fraca (mínimo 6 caracteres).";
+                case 'auth/operation-not-allowed':
+                     return "Login por email/senha não está ativado. (Verifique o firebaseConfig)";
+                default:
+                    return "Ocorreu um erro. Tente novamente.";
+            }
+        }
+
+        authElements.logoutButton.onclick = () => {
+            signOut(auth);
+        };
+
+        // --- Lógica da Tela Inicial (Home) ---
+
+        // *** NOVO: Função para carregar grupos do usuário ***
+        async function loadUserGroups(user) {
+            if (!user) return;
+
+            // Limpa listas e mostra loading
+            homeElements.adminGroupsList.innerHTML = '';
+            homeElements.participantGroupsList.innerHTML = '';
+            homeElements.adminGroupsLoading.classList.remove('hidden');
+            homeElements.participantGroupsLoading.classList.remove('hidden');
+            
+            let adminGroups = [];
+            let participantGroups = [];
+            const groupsRef = collection(db, 'groups');
+
+            try {
+                // Query 1: Grupos onde sou admin
+                const qAdmin = query(groupsRef, where('adminId', '==', user.uid));
+                const adminSnapshot = await getDocs(qAdmin);
+                adminSnapshot.forEach(doc => {
+                    adminGroups.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Query 2: Grupos onde participo (usando o novo campo participantUids)
+                const qParticipant = query(groupsRef, where('participantUids', 'array-contains', user.uid));
+                const participantSnapshot = await getDocs(qParticipant);
+                participantSnapshot.forEach(doc => {
+                    // Evita duplicatas se o admin também participa
+                    if (doc.data().adminId !== user.uid) { 
+                        participantGroups.push({ id: doc.id, ...doc.data() });
+                    }
+                });
+
+                renderUserGroups(adminGroups, participantGroups);
+
+            } catch (error) {
+                console.error("Erro ao buscar grupos:", error);
+                homeElements.homeErrorMessage.textContent = "Erro ao buscar seus grupos.";
+                homeElements.adminGroupsLoading.classList.add('hidden');
+                homeElements.participantGroupsLoading.classList.add('hidden');
+            }
+        }
+
+        // *** NOVO: Função para renderizar as listas de grupos ***
+        function renderUserGroups(adminGroups, participantGroups) {
+            homeElements.adminGroupsLoading.classList.add('hidden');
+            homeElements.participantGroupsLoading.classList.add('hidden');
+            
+            // Renderiza grupos de admin
+            if (adminGroups.length === 0) {
+                homeElements.adminGroupsList.innerHTML = '<li class="text-gray-500 text-center py-2">Você não é admin de nenhum grupo.</li>';
+            } else {
+                adminGroups.forEach(group => {
+                    const li = document.createElement('li');
+                    li.className = "bg-gray-50 hover:bg-gray-100 p-3 rounded-lg cursor-pointer flex justify-between items-center";
+                    li.innerHTML = `
+                        <span class="font-medium text-blue-600">${group.name}</span>
+                        <span class="text-sm text-gray-500">${group.participants.length} part.</span>
+                    `;
+                    li.onclick = () => window.location.hash = `#group=${group.id}`;
+                    homeElements.adminGroupsList.appendChild(li);
+                });
+            }
+
+            // Renderiza grupos que participo
+            if (participantGroups.length === 0) {
+                homeElements.participantGroupsList.innerHTML = '<li class="text-gray-500 text-center py-2">Você não participa de nenhum grupo.</li>';
+            } else {
+                participantGroups.forEach(group => {
+                    const li = document.createElement('li');
+                    li.className = "bg-gray-50 hover:bg-gray-100 p-3 rounded-lg cursor-pointer flex justify-between items-center";
+                    li.innerHTML = `
+                        <span class="font-medium text-gray-700">${group.name}</span>
+                        <span class="text-sm text-gray-500">${group.participants.length} part.</span>
+                    `;
+                    li.onclick = () => window.location.hash = `#group=${group.id}`;
+                    homeElements.participantGroupsList.appendChild(li);
+                });
+            }
+            
+            // Atualiza ícones
+             if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+
+        // Criar grupo (*** ATUALIZADO ***)
+        homeElements.createGroupButton.onclick = async () => {
+            const groupName = homeElements.newGroupNameInput.value.trim();
+            if (!groupName || !currentUser) {
+                homeElements.homeErrorMessage.textContent = "Digite um nome para o grupo.";
+                return;
+            }
+            homeElements.homeErrorMessage.textContent = "";
+
+            try {
+                // Cria o documento do grupo
+                const docRef = await addDoc(collection(db, 'groups'), {
+                    name: groupName,
+                    adminId: currentUser.uid,
+                    adminName: currentUser.displayName || currentUser.email,
+                    createdAt: new Date(),
+                    participants: [], 
+                    participantUids: [], // <-- NOVO CAMPO
+                    restrictions: [], 
+                    drawn: false,
+                    pairings: {} 
+                });
+                
+                window.location.hash = `#group=${docRef.id}`;
+                homeElements.newGroupNameInput.value = '';
+
+            } catch (error) {
+                console.error("Erro ao criar grupo:", error);
+                homeElements.homeErrorMessage.textContent = "Não foi possível criar o grupo.";
+            }
+        };
+
+        // Entrar em grupo
+        homeElements.joinGroupButton.onclick = () => {
+            // ... (código existente, sem mudanças) ...
+            const groupId = homeElements.joinGroupIdInput.value.trim();
+            if (!groupId) {
+                homeElements.homeErrorMessage.textContent = "Digite um ID de grupo.";
+                return;
+            }
+            homeElements.homeErrorMessage.textContent = "";
+            window.location.hash = `#group=${groupId}`;
+            homeElements.joinGroupIdInput.value = '';
+        };
+
+        // --- Lógica da Tela de Grupo ---
+        
+        // Voltar para Home
+        groupElements.backButton.onclick = () => {
+            // ... (código existente, sem mudanças) ...
+            if (currentGroupListener) {
+                currentGroupListener(); 
+                currentGroupListener = null;
+            }
+            currentGroup = null;
+            window.location.hash = ''; 
+            // Não precisa chamar loadUserGroups aqui, pois onAuthStateChanged
+            // ou handleHashChange (quando o hash fica vazio) vão cuidar disso
+            showScreen('home'); 
+        };
+        
+        // Copiar link do grupo
+        groupElements.groupLinkInput.onclick = () => {
+            // ... (código existente, sem mudanças) ...
+            const link = window.location.href;
+            const tempInput = document.createElement('input');
+            tempInput.value = link;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            
+            try {
+                document.execCommand('copy'); 
+                groupElements.copiedMessage.style.opacity = '1';
+                setTimeout(() => {
+                    groupElements.copiedMessage.style.opacity = '0';
+                }, 2000);
+            } catch (err) {
+                console.error('Falha ao copiar link: ', err);
+            }
+            document.body.removeChild(tempInput);
+        };
+        
+        function listenToGroup(groupId) {
+            // ... (código existente, sem mudanças) ...
+            if (currentGroupListener) {
+                currentGroupListener(); 
+            }
+            
+            const groupRef = doc(db, 'groups', groupId);
+            showScreen('loading');
+            groupElements.errorMessage.textContent = '';
+            
+            currentGroupListener = onSnapshot(groupRef, (docSnap) => {
+                if (!docSnap.exists()) {
+                    groupElements.errorMessage.textContent = "Grupo não encontrado.";
+                    showScreen('home'); 
+                    window.location.hash = '';
+                    loadUserGroups(currentUser); // Carrega grupos da home
+                    return;
+                }
+                
+                currentGroup = { id: docSnap.id, ...docSnap.data() };
+                updateGroupUI(currentGroup);
+                
+                if (currentScreen !== 'group') {
+                    showScreen('group');
+                }
+
+            }, (error) => {
+                console.error("Erro ao ouvir grupo:", error);
+                groupElements.errorMessage.textContent = "Erro ao carregar o grupo.";
+                showScreen('home');
+                window.location.hash = '';
+                loadUserGroups(currentUser); // Carrega grupos da home
+            });
+        }
+        
+        function updateGroupUI(group) {
+            // ... (código existente, sem mudanças) ...
+            if (!currentUser) return; 
+            
+            groupElements.groupNameTitle.textContent = group.name;
+            groupElements.groupLinkInput.value = `${window.location.origin}${window.location.pathname}#group=${group.id}`;
+            
+            // Atualiza lista de participantes e preenche dropdowns
+            groupElements.participantList.innerHTML = '';
+            groupElements.restrictionGiver.innerHTML = '<option value="">Pessoa...</option>';
+            groupElements.restrictionReceiver.innerHTML = '<option value="">...outra pessoa</option>';
+            
+            group.participants.forEach(p => {
+                const li = document.createElement('li');
+                li.className = "py-3 flex items-center";
+                li.innerHTML = `
+                    <i data-lucide="user" class="w-5 h-5 mr-3 text-gray-500"></i>
+                    <span class="font-medium">${p.name}</span>
+                    ${p.uid === group.adminId ? '<span class="ml-auto text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-semibold">Admin</span>' : ''}
+                `;
+                groupElements.participantList.appendChild(li);
+
+                const optionGiver = new Option(p.name, p.uid);
+                const optionReceiver = new Option(p.name, p.uid);
+                groupElements.restrictionGiver.add(optionGiver);
+                groupElements.restrictionReceiver.add(optionReceiver);
+            });
+            
+            if (group.participants.length === 0) {
+                 groupElements.participantList.innerHTML = '<li class="text-gray-500 text-center py-4">Nenhum participante ainda.</li>';
+            }
+            
+            groupElements.participantCount.textContent = group.participants.length;
+
+            const userIsParticipant = group.participants.some(p => p.uid === currentUser.uid);
+
+            if (userIsParticipant) {
+                groupElements.joinLeaveText.textContent = "Sair do Grupo";
+                groupElements.joinLeaveButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                groupElements.joinLeaveButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                groupElements.joinLeaveButton.querySelector('i').setAttribute('data-lucide', 'user-minus');
+            } else {
+                groupElements.joinLeaveText.textContent = "Entrar no Grupo";
+                groupElements.joinLeaveButton.classList.add('bg-green-500', 'hover:bg-green-600');
+                groupElements.joinLeaveButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                groupElements.joinLeaveButton.querySelector('i').setAttribute('data-lucide', 'user-plus');
+            }
+            groupElements.joinLeaveButton.disabled = group.drawn;
+            if(group.drawn) {
+                 groupElements.joinLeaveButton.classList.add('opacity-50', 'cursor-not-allowed');
+                 groupElements.joinLeaveText.textContent = "Sorteio Realizado";
+            }
+
+            const userIsAdmin = group.adminId === currentUser.uid;
+            if (userIsAdmin && !group.drawn) {
+                groupElements.adminActions.classList.remove('hidden');
+                
+                const count = group.participants.length;
+                const canDraw = count >= 3; 
+                
+                groupElements.drawButton.disabled = !canDraw;
+                if (canDraw) {
+                    groupElements.drawButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    groupElements.drawError.textContent = '';
+                    groupElements.drawButton.querySelector('span').textContent = `Sortear (${count} pessoas)`;
+                } else {
+                    groupElements.drawButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    groupElements.drawButton.querySelector('span').textContent = "Sortear (Mínimo 3 pessoas)";
+                    if (count < 3) {
+                         groupElements.drawError.textContent = "Mínimo de 3 pessoas para sortear.";
+                    }
+                }
+            } else {
+                groupElements.adminActions.classList.add('hidden');
+            }
+            
+            groupElements.restrictionList.innerHTML = '';
+            if (group.restrictions && group.restrictions.length > 0) {
+                group.restrictions.forEach(r => {
+                    const li = document.createElement('li');
+                    li.className = "flex justify-between items-center bg-gray-100 p-2 rounded";
+                    li.innerHTML = `
+                        <span>
+                            <strong class="font-medium">${r.giverName}</strong>
+                            <span class="text-gray-600">não tira</span>
+                            <strong class="font-medium">${r.receiverName}</strong>
+                        </span>
+                        <button class="remove-restriction-button text-red-500 hover:text-red-700" 
+                                data-giver-uid="${r.giverUid}" 
+                                data-receiver-uid="${r.receiverUid}">
+                            <i data-lucide="x-circle" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                    groupElements.restrictionList.appendChild(li);
+                });
+            }
+
+            if (group.drawn) {
+                groupElements.adminActions.classList.add('hidden'); 
+                
+                if (userIsParticipant) {
+                    const myPair = group.pairings[currentUser.uid];
+                    if (myPair) {
+                        const revealedName = group.participants.find(p => p.uid === myPair)?.name || '???';
+                        groupElements.revealedPerson.textContent = revealedName;
+                        groupElements.resultCard.classList.remove('hidden');
+                        groupElements.waitingCard.classList.add('hidden');
+                    }
+                } else {
+                    groupElements.resultCard.classList.add('hidden');
+                    groupElements.waitingCard.classList.add('hidden');
+                }
+            } else {
+                groupElements.resultCard.classList.add('hidden');
+                if(userIsParticipant) {
+                    groupElements.waitingCard.classList.remove('hidden');
+                } else {
+                    groupElements.waitingCard.classList.add('hidden');
+                }
+            }
+            
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+        
+        // Botão de Entrar/Sair do Grupo (*** ATUALIZADO ***)
+        groupElements.joinLeaveButton.onclick = async () => {
+            if (!currentUser || !currentGroup) return;
+
+            const userIsParticipant = currentGroup.participants.some(p => p.uid === currentUser.uid);
+            const userPayload = { 
+                uid: currentUser.uid, 
+                name: currentUser.displayName || currentUser.email 
+            };
+            const groupRef = doc(db, 'groups', currentGroup.id);
+
+            try {
+                if (userIsParticipant) {
+                    // Sair do grupo
+                    // TODO: Remover restrições associadas a este usuário
+                    await updateDoc(groupRef, {
+                        participants: arrayRemove(userPayload),
+                        participantUids: arrayRemove(currentUser.uid) // <-- NOVO
+                    });
+                } else {
+                    // Entrar no grupo
+                    await updateDoc(groupRef, {
+                        participants: arrayUnion(userPayload),
+                        participantUids: arrayUnion(currentUser.uid) // <-- NOVO
+                    });
+                }
+            } catch (error) {
+                console.error("Erro ao entrar/sair do grupo:", error);
+                groupElements.errorMessage.textContent = "Não foi possível atualizar a participação.";
+            }
+        };
+
+        // --- Lógica de Restrições (Nova) ---
+
+        // Adicionar Restrição
+        groupElements.addRestrictionButton.onclick = async () => {
+            // ... (código existente, sem mudanças) ...
+            const giverUid = groupElements.restrictionGiver.value;
+            const receiverUid = groupElements.restrictionReceiver.value;
+
+            if (!giverUid || !receiverUid) {
+                groupElements.drawError.textContent = "Por favor, selecione as duas pessoas.";
+                return;
+            }
+            
+            if (giverUid === receiverUid) {
+                groupElements.drawError.textContent = "Uma pessoa não pode ter restrição de tirar ela mesma.";
+                return;
+            }
+            
+            const giverName = groupElements.restrictionGiver.options[groupElements.restrictionGiver.selectedIndex].text;
+            const receiverName = groupElements.restrictionReceiver.options[groupElements.restrictionReceiver.selectedIndex].text;
+
+            const restrictionPayload = {
+                giverUid,
+                giverName,
+                receiverUid,
+                receiverName
+            };
+            
+            const groupRef = doc(db, 'groups', currentGroup.id);
+            try {
+                await updateDoc(groupRef, {
+                    restrictions: arrayUnion(restrictionPayload)
+                });
+                
+                groupElements.restrictionGiver.value = "";
+                groupElements.restrictionReceiver.value = "";
+                groupElements.drawError.textContent = ""; 
+                
+            } catch (error) {
+                console.error("Erro ao adicionar restrição:", error);
+                groupElements.drawError.textContent = "Não foi possível adicionar a restrição.";
+            }
+        };
+        
+        // Remover Restrição (usando delegação de evento)
+        groupElements.restrictionList.onclick = async (e) => {
+            // ... (código existente, sem mudanças) ...
+            const removeButton = e.target.closest('.remove-restriction-button');
+            if (removeButton) {
+                const giverUid = removeButton.dataset.giverUid;
+                const receiverUid = removeButton.dataset.receiverUid;
+
+                const restrictionToRemove = (currentGroup.restrictions || []).find(
+                    r => r.giverUid === giverUid && r.receiverUid === receiverUid
+                );
+                
+                if (restrictionToRemove) {
+                    const groupRef = doc(db, 'groups', currentGroup.id);
+                    try {
+                        await updateDoc(groupRef, {
+                            restrictions: arrayRemove(restrictionToRemove)
+                        });
+                    } catch (error) {
+                        console.error("Erro ao remover restrição:", error);
+                        groupElements.drawError.textContent = "Não foi possível remover a restrição.";
+                    }
+                }
+            }
+        };
+        
+
+        // Botão de Sortear (ALGORITMO NOVO)
+        groupElements.drawButton.onclick = async () => {
+            // ... (código existente, sem mudanças) ...
+            if (!currentUser || !currentGroup || currentUser.uid !== currentGroup.adminId) return;
+            
+            const givers = [...currentGroup.participants]; 
+            let receivers = [...currentGroup.participants]; 
+            const restrictions = currentGroup.restrictions || [];
+            const count = givers.length;
+
+            if (count < 3) {
+                groupElements.drawError.textContent = "Mínimo de 3 pessoas para sortear.";
+                return;
+            }
+            
+            groupElements.drawError.textContent = "";
+
+            function isRestricted(giverUid, receiverUid) {
+                return restrictions.some(r => r.giverUid === giverUid && r.receiverUid === receiverUid);
+            }
+
+            let pairings = {};
+            let isValid = false;
+            let attempts = 0;
+            const MAX_ATTEMPTS = 1000; 
+
+            while (!isValid && attempts < MAX_ATTEMPTS) {
+                attempts++;
+                pairings = {}; 
+                isValid = true; 
+
+                for (let i = receivers.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [receivers[i], receivers[j]] = [receivers[j], receivers[i]];
+                }
+
+                for (let i = 0; i < givers.length; i++) {
+                    const giver = givers[i];
+                    const receiver = receivers[i];
+
+                    if (giver.uid === receiver.uid || isRestricted(giver.uid, receiver.uid)) {
+                        isValid = false; 
+                        break; 
+                    }
+                    
+                    pairings[giver.uid] = receiver.uid;
+                }
+            } // Fim do while
+
+            if (!isValid) {
+                console.error("Não foi possível encontrar uma combinação válida após 1000 tentativas.");
+                groupElements.drawError.textContent = "Sorteio impossível com essas restrições. Tente remover algumas.";
+                return;
+            }
+            
+            try {
+                const groupRef = doc(db, 'groups', currentGroup.id);
+                await updateDoc(groupRef, {
+                    drawn: true,
+                    pairings: pairings
+                });
+            } catch (error) {
+                 console.error("Erro ao salvar sorteio:", error);
+                 groupElements.drawError.textContent = "Erro ao salvar o sorteio.";
+            }
+        };
+        
+        
+        // --- Lógica de Navegação (Hash) ---
+        
+        window.addEventListener('load', () => {
+            handleHashChange();
+            
+            setTimeout(() => {
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                } else {
+                     setTimeout(() => {
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+                    }, 1000);
+                }
+            }, 50);
+        });
+        
+        window.addEventListener('hashchange', handleHashChange);
+        
+        function handleHashChange() {
+            const hash = window.location.hash;
+            
+            if (hash.startsWith('#group=')) {
+                const groupId = hash.replace('#group=', '');
+                if (isAuthReady) { 
+                    if (currentUser) {
+                        listenToGroup(groupId);
+                    } else {
+                        showScreen('auth'); 
+                    }
+                }
+            } else {
+                 if (isAuthReady) { 
+                    if (currentUser) {
+                        // *** MUDANÇA: Carrega os grupos ao voltar para home ***
+                        loadUserGroups(currentUser); 
+                        showScreen('home');
+                    } else {
+                        showScreen('auth');
+                    }
+                }
+            }
+        };
+        
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+    </script>
+</body>
+</html>
