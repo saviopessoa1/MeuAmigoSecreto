@@ -6,7 +6,7 @@
     <title>Amigo Secreto</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons (CORREÇÃO: 'defer' AGORA VAI DE VERDADE) -->
+    <!-- Lucide Icons -->
     <script src="https://cdn.jsdelivr.net/npm/lucide-static@latest/dist/lucide.min.js"></script>
     
     <style>
@@ -28,6 +28,21 @@
         /* Oculta/mostra campos de formulário */
         .form-hidden {
             display: none;
+        }
+        
+        /* Estilo para a lista de checkboxes de grupos */
+        #restriction-group-participants label {
+            display: block;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #restriction-group-participants label:hover {
+            background-color: #f4f5f7;
+        }
+        #restriction-group-participants input {
+            margin-right: 10px;
         }
     </style>
 </head>
@@ -114,17 +129,13 @@
             
             <p id="home-error-message" class="text-red-500 text-center mb-4"></p>
 
-            <!-- ============================================= -->
-            <!-- NOVA SEÇÃO: Listas de Grupos                  -->
-            <!-- ============================================= -->
+            <!-- Listas de Grupos -->
             <div class="border-t pt-4">
                 <!-- Meus Grupos (Admin) -->
                 <div class="mb-6">
                     <h2 class="text-xl font-semibold mb-3 text-gray-800">Meus Grupos (Admin)</h2>
                     <ul id="admin-groups-list" class="space-y-2">
-                        <!-- Item de loading -->
                         <li id="admin-groups-loading" class="text-gray-500 text-center py-2">Buscando...</li>
-                        <!-- Grupos serão adicionados aqui -->
                     </ul>
                 </div>
 
@@ -132,9 +143,7 @@
                 <div>
                     <h2 class="text-xl font-semibold mb-3 text-gray-800">Grupos que Participo</h2>
                     <ul id="participant-groups-list" class="space-y-2">
-                        <!-- Item de loading -->
                         <li id="participant-groups-loading" class="text-gray-500 text-center py-2">Buscando...</li>
-                        <!-- Grupos serão adicionados aqui -->
                     </ul>
                 </div>
             </div>
@@ -143,13 +152,18 @@
 
         <!-- 4. Tela do Grupo (Escondida) -->
         <div id="group-screen" class="hidden">
+           <!-- ... -->
             <div class="flex justify-between items-center mb-4">
                 <button id="back-to-home-button" title="Voltar" class="text-gray-500 hover:text-blue-500 transition-colors">
                     <i data-lucide="arrow-left" class="w-6 h-6"></i>
                 </button>
                 <h1 id="group-name-title" class="text-2xl font-bold text-blue-600 text-center truncate px-4">Nome do Grupo</h1>
-                <div class="w-6"></div> <!-- Espaçador -->
+                <!-- MODIFICADO: Adicione este botão -->
+                <button id="logout-button-group" title="Sair" class="text-gray-500 hover:text-red-500 transition-colors">
+                    <i data-lucide="log-out" class="w-6 h-6"></i>
+                </button>
             </div>
+<!-- ... -->
 
             <!-- Card de Resultado do Sorteio -->
             <div id="result-card" class="hidden bg-green-100 border-l-4 border-green-500 text-green-700 p-6 rounded-lg shadow-md text-center mb-6">
@@ -181,12 +195,39 @@
                 
                 <!-- Ações do Admin -->
                 <div id="admin-actions" class="hidden border-t pt-4 mt-4">
-                    <p class="text-sm text-gray-600 text-center mb-2 font-semibold">Você é o admin deste grupo.</p>
+                    <p class="text-sm text-gray-600 text-center mb-4 font-semibold">Você é o admin deste grupo.</p>
                     
-                    <!-- NOVA SEÇÃO: Restrições -->
+                    <!-- ============================================= -->
+                    <!-- NOVA SEÇÃO: Grupos de Restrição               -->
+                    <!-- ============================================= -->
+                    <div id="restriction-group-section" class="mb-6 border-b pb-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Grupos de Restrição</h3>
+                        <p class="text-sm text-gray-500 mb-3">Crie grupos onde ninguém pode tirar ninguém de dentro do mesmo grupo (ex: casais, irmãos).</p>
+                        
+                        <div class="mb-3">
+                            <p class="text-sm font-medium text-gray-700 mb-2">Selecione os participantes para o grupo:</p>
+                            <!-- Checkboxes dos participantes irão aqui -->
+                            <div id="restriction-group-participants" class="space-y-1 max-h-32 overflow-y-auto bg-gray-50 p-3 rounded-lg border">
+                                <!-- Ex: <label><input type="checkbox" value="uid1"> Nome 1</label> -->
+                            </div>
+                        </div>
+                        
+                        <button id="add-restriction-group-button" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center justify-center">
+                            <i data-lucide="users" class="w-4 h-4 mr-2"></i>
+                            Criar Grupo de Restrição
+                        </button>
+                        
+                        <!-- Lista de grupos criados -->
+                        <h4 class="text-sm font-medium text-gray-700 mt-4 mb-2">Grupos Criados:</h4>
+                        <ul id="restriction-group-list" class="text-sm text-gray-700 space-y-2">
+                            <!-- Lista de grupos virá aqui -->
+                        </ul>
+                    </div>
+
+                    <!-- SEÇÃO: Restrições Individuais (Existente) -->
                     <div id="restriction-section" class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Restrições</h3>
-                        <p class="text-sm text-gray-500 mb-3">Defina quem não pode tirar quem (ex: casais).</p>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Restrições Individuais</h3>
+                        <p class="text-sm text-gray-500 mb-3">Defina quem não pode tirar quem (ex: Filho não pode tirar Pai).</p>
                         
                         <div class="flex items-center space-x-2 mb-3">
                             <select id="restriction-giver" class="flex-1 w-1/3 p-2 border border-gray-300 rounded-lg text-sm">
@@ -202,7 +243,7 @@
                         </div>
                         
                         <ul id="restriction-list" class="text-sm text-gray-700 space-y-2">
-                            <!-- Lista de restrições virá aqui -->
+                            <!-- Lista de restrições individuais virá aqui -->
                         </ul>
                     </div>
                     
@@ -250,14 +291,15 @@
             collection, 
             addDoc,
             setLogLevel,
-            query,         // <-- NOVO
-            where,         // <-- NOVO
-            getDocs        // <-- NOVO
+            query,
+            where,
+            getDocs
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Configuração do Firebase ---
         
         // CONFIGURAÇÃO DO SEU PROJETO 'amigosecretoapp-e3f13'
+        // (Mantido como no seu arquivo original)
         const firebaseConfig = {
             apiKey: "AIzaSyCRkBdAZtCTLWgtlwqYXdhcz9005avNMo4",
             authDomain: "amigosecretoapp-e3f13.firebaseapp.com",
@@ -319,14 +361,15 @@
             joinGroupIdInput: document.getElementById('join-group-id'),
             joinGroupButton: document.getElementById('join-group-button'),
             homeErrorMessage: document.getElementById('home-error-message'),
-            adminGroupsList: document.getElementById('admin-groups-list'), // <-- NOVO
-            participantGroupsList: document.getElementById('participant-groups-list'), // <-- NOVO
-            adminGroupsLoading: document.getElementById('admin-groups-loading'), // <-- NOVO
-            participantGroupsLoading: document.getElementById('participant-groups-loading') // <-- NOVO
+            adminGroupsList: document.getElementById('admin-groups-list'),
+            participantGroupsList: document.getElementById('participant-groups-list'),
+            adminGroupsLoading: document.getElementById('admin-groups-loading'),
+            participantGroupsLoading: document.getElementById('participant-groups-loading')
         };
 
         const groupElements = {
             backButton: document.getElementById('back-to-home-button'),
+            logoutButton: document.getElementById('logout-button-group'),
             groupNameTitle: document.getElementById('group-name-title'),
             participantList: document.getElementById('participant-list'),
             participantCount: document.getElementById('participant-count'),
@@ -341,11 +384,17 @@
             groupLinkInput: document.getElementById('group-link-input'),
             copiedMessage: document.getElementById('copied-message'),
             errorMessage: document.getElementById('error-message'),
+            // Restrições Individuais
             restrictionSection: document.getElementById('restriction-section'),
             restrictionGiver: document.getElementById('restriction-giver'),
             restrictionReceiver: document.getElementById('restriction-receiver'),
             addRestrictionButton: document.getElementById('add-restriction-button'),
-            restrictionList: document.getElementById('restriction-list')
+            restrictionList: document.getElementById('restriction-list'),
+            // NOVO: Grupos de Restrição
+            restrictionGroupSection: document.getElementById('restriction-group-section'),
+            restrictionGroupParticipants: document.getElementById('restriction-group-participants'),
+            addRestrictionGroupButton: document.getElementById('add-restriction-group-button'),
+            restrictionGroupList: document.getElementById('restriction-group-list')
         };
 
         // --- Funções Principais ---
@@ -368,27 +417,30 @@
             isAuthReady = true; 
             if (user) {
                 currentUser = user;
+                // Garante que o nome de exibição esteja atualizado no objeto currentUser
+                // Isso é útil especialmente após o cadastro
+                if (user.displayName) {
+                    currentUser.displayName = user.displayName;
+                }
+                
                 authElements.userName.textContent = user.displayName || user.email; 
                 
                 const groupIdFromHash = window.location.hash.replace('#group=', '');
                 if (groupIdFromHash) {
                     listenToGroup(groupIdFromHash); 
                 } else {
-                    // *** MUDANÇA: Carrega os grupos na tela inicial ***
-                    loadUserGroups(user); // Carrega as listas
-                    showScreen('home');   // Mostra a tela inicial
+                    loadUserGroups(user);
+                    showScreen('home');
                 }
             } else {
                 currentUser = null;
                 if(currentGroupListener) currentGroupListener(); 
                 window.location.hash = ''; 
-                
                 showScreen('auth'); 
             }
         });
 
         function toggleAuthMode() {
-            // ... (código existente, sem mudanças) ...
             isLoginMode = !isLoginMode;
             authElements.authErrorMessage.textContent = ''; 
             
@@ -407,7 +459,6 @@
         authElements.authToggleButton.onclick = toggleAuthMode;
 
         authElements.authForm.onsubmit = async (e) => {
-            // ... (código existente, sem mudanças) ...
             e.preventDefault(); 
             
             const name = authElements.nameInput.value.trim();
@@ -434,14 +485,15 @@
                     }
                     
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    
+                    // ATUALIZAÇÃO IMPORTANTE:
+                    // Atualiza o perfil e *imediatamente* atualiza o objeto currentUser local
                     await updateProfile(userCredential.user, { displayName: name });
-                    
-                    authElements.userName.textContent = name;
-                    
                     currentUser = auth.currentUser; 
                     if (currentUser) {
-                         currentUser.displayName = name;
+                         currentUser.displayName = name; // Garante que o nome está no objeto local
                     }
+                    authElements.userName.textContent = name;
                 }
             } catch (error) {
                 console.error("Erro de autenticação:", error);
@@ -450,7 +502,6 @@
         };
 
         function parseFirebaseError(error) {
-            // ... (código existente, sem mudanças) ...
             switch (error.code) {
                 case 'auth/invalid-email':
                     return "Email inválido.";
@@ -464,7 +515,7 @@
                 case 'auth/weak-password':
                     return "A senha é muito fraca (mínimo 6 caracteres).";
                 case 'auth/operation-not-allowed':
-                     return "Login por email/senha não está ativado. (Verifique o firebaseConfig)";
+                     return "Login por email/senha não está ativado.";
                 default:
                     return "Ocorreu um erro. Tente novamente.";
             }
@@ -476,11 +527,9 @@
 
         // --- Lógica da Tela Inicial (Home) ---
 
-        // *** NOVO: Função para carregar grupos do usuário ***
         async function loadUserGroups(user) {
             if (!user) return;
 
-            // Limpa listas e mostra loading
             homeElements.adminGroupsList.innerHTML = '';
             homeElements.participantGroupsList.innerHTML = '';
             homeElements.adminGroupsLoading.classList.remove('hidden');
@@ -491,18 +540,15 @@
             const groupsRef = collection(db, 'groups');
 
             try {
-                // Query 1: Grupos onde sou admin
                 const qAdmin = query(groupsRef, where('adminId', '==', user.uid));
                 const adminSnapshot = await getDocs(qAdmin);
                 adminSnapshot.forEach(doc => {
                     adminGroups.push({ id: doc.id, ...doc.data() });
                 });
                 
-                // Query 2: Grupos onde participo (usando o novo campo participantUids)
                 const qParticipant = query(groupsRef, where('participantUids', 'array-contains', user.uid));
                 const participantSnapshot = await getDocs(qParticipant);
                 participantSnapshot.forEach(doc => {
-                    // Evita duplicatas se o admin também participa
                     if (doc.data().adminId !== user.uid) { 
                         participantGroups.push({ id: doc.id, ...doc.data() });
                     }
@@ -518,12 +564,10 @@
             }
         }
 
-        // *** NOVO: Função para renderizar as listas de grupos ***
         function renderUserGroups(adminGroups, participantGroups) {
             homeElements.adminGroupsLoading.classList.add('hidden');
             homeElements.participantGroupsLoading.classList.add('hidden');
             
-            // Renderiza grupos de admin
             if (adminGroups.length === 0) {
                 homeElements.adminGroupsList.innerHTML = '<li class="text-gray-500 text-center py-2">Você não é admin de nenhum grupo.</li>';
             } else {
@@ -539,7 +583,6 @@
                 });
             }
 
-            // Renderiza grupos que participo
             if (participantGroups.length === 0) {
                 homeElements.participantGroupsList.innerHTML = '<li class="text-gray-500 text-center py-2">Você não participa de nenhum grupo.</li>';
             } else {
@@ -555,14 +598,12 @@
                 });
             }
             
-            // Atualiza ícones
              if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
         }
 
 
-        // Criar grupo (*** ATUALIZADO ***)
         homeElements.createGroupButton.onclick = async () => {
             const groupName = homeElements.newGroupNameInput.value.trim();
             if (!groupName || !currentUser) {
@@ -572,15 +613,15 @@
             homeElements.homeErrorMessage.textContent = "";
 
             try {
-                // Cria o documento do grupo
                 const docRef = await addDoc(collection(db, 'groups'), {
                     name: groupName,
                     adminId: currentUser.uid,
                     adminName: currentUser.displayName || currentUser.email,
                     createdAt: new Date(),
                     participants: [], 
-                    participantUids: [], // <-- NOVO CAMPO
+                    participantUids: [],
                     restrictions: [], 
+                    restrictionGroups: [], // <-- NOVO CAMPO
                     drawn: false,
                     pairings: {} 
                 });
@@ -594,9 +635,7 @@
             }
         };
 
-        // Entrar em grupo
         homeElements.joinGroupButton.onclick = () => {
-            // ... (código existente, sem mudanças) ...
             const groupId = homeElements.joinGroupIdInput.value.trim();
             if (!groupId) {
                 homeElements.homeErrorMessage.textContent = "Digite um ID de grupo.";
@@ -606,26 +645,24 @@
             window.location.hash = `#group=${groupId}`;
             homeElements.joinGroupIdInput.value = '';
         };
-
-        // --- Lógica da Tela de Grupo ---
+        // NOVO: Botão de Logout na tela de grupo
+        groupElements.logoutButton.onclick = () => {
+            signOut(auth);
+        };
         
-        // Voltar para Home
+        // Voltar para Home 
         groupElements.backButton.onclick = () => {
-            // ... (código existente, sem mudanças) ...
             if (currentGroupListener) {
                 currentGroupListener(); 
                 currentGroupListener = null;
             }
             currentGroup = null;
             window.location.hash = ''; 
-            // Não precisa chamar loadUserGroups aqui, pois onAuthStateChanged
-            // ou handleHashChange (quando o hash fica vazio) vão cuidar disso
-            showScreen('home'); 
+            // O `handleHashChange` vai cuidar de mostrar a tela home
+            // e carregar os grupos
         };
         
-        // Copiar link do grupo
         groupElements.groupLinkInput.onclick = () => {
-            // ... (código existente, sem mudanças) ...
             const link = window.location.href;
             const tempInput = document.createElement('input');
             tempInput.value = link;
@@ -645,7 +682,6 @@
         };
         
         function listenToGroup(groupId) {
-            // ... (código existente, sem mudanças) ...
             if (currentGroupListener) {
                 currentGroupListener(); 
             }
@@ -659,7 +695,7 @@
                     groupElements.errorMessage.textContent = "Grupo não encontrado.";
                     showScreen('home'); 
                     window.location.hash = '';
-                    loadUserGroups(currentUser); // Carrega grupos da home
+                    loadUserGroups(currentUser);
                     return;
                 }
                 
@@ -675,22 +711,32 @@
                 groupElements.errorMessage.textContent = "Erro ao carregar o grupo.";
                 showScreen('home');
                 window.location.hash = '';
-                loadUserGroups(currentUser); // Carrega grupos da home
+                loadUserGroups(currentUser);
             });
         }
         
+        // Função para obter nome do participante pelo UID
+        function getParticipantName(uid) {
+            if (!currentGroup) return '???';
+            const participant = currentGroup.participants.find(p => p.uid === uid);
+            return participant ? participant.name : '???';
+        }
+
         function updateGroupUI(group) {
-            // ... (código existente, sem mudanças) ...
             if (!currentUser) return; 
             
             groupElements.groupNameTitle.textContent = group.name;
             groupElements.groupLinkInput.value = `${window.location.origin}${window.location.pathname}#group=${group.id}`;
             
-            // Atualiza lista de participantes e preenche dropdowns
+            // Limpa listas
             groupElements.participantList.innerHTML = '';
             groupElements.restrictionGiver.innerHTML = '<option value="">Pessoa...</option>';
             groupElements.restrictionReceiver.innerHTML = '<option value="">...outra pessoa</option>';
+            groupElements.restrictionGroupParticipants.innerHTML = ''; // NOVO
             
+            // Popula lista de participantes E dropdowns de restrição
+            const participantsInAGroup = new Set( (group.restrictionGroups || []).flat() ); // NOVO
+
             group.participants.forEach(p => {
                 const li = document.createElement('li');
                 li.className = "py-3 flex items-center";
@@ -701,20 +747,36 @@
                 `;
                 groupElements.participantList.appendChild(li);
 
+                // Adiciona aos dropdowns de restrição individual
                 const optionGiver = new Option(p.name, p.uid);
                 const optionReceiver = new Option(p.name, p.uid);
                 groupElements.restrictionGiver.add(optionGiver);
                 groupElements.restrictionReceiver.add(optionReceiver);
+
+                // NOVO: Adiciona aos checkboxes de grupo (se não estiver em um grupo)
+                if (!participantsInAGroup.has(p.uid)) {
+                    const label = document.createElement('label');
+                    label.className = "font-medium text-gray-700";
+                    label.innerHTML = `
+                        <input type="checkbox" value="${p.uid}" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
+                        ${p.name}
+                    `;
+                    groupElements.restrictionGroupParticipants.appendChild(label);
+                }
             });
             
             if (group.participants.length === 0) {
                  groupElements.participantList.innerHTML = '<li class="text-gray-500 text-center py-4">Nenhum participante ainda.</li>';
+            }
+            if (groupElements.restrictionGroupParticipants.children.length === 0) {
+                 groupElements.restrictionGroupParticipants.innerHTML = '<p class="text-gray-500 text-sm text-center py-2">Todos os participantes já estão em grupos.</p>';
             }
             
             groupElements.participantCount.textContent = group.participants.length;
 
             const userIsParticipant = group.participants.some(p => p.uid === currentUser.uid);
 
+            // ... (Lógica do botão Entrar/Sair - sem mudança) ...
             if (userIsParticipant) {
                 groupElements.joinLeaveText.textContent = "Sair do Grupo";
                 groupElements.joinLeaveButton.classList.remove('bg-green-500', 'hover:bg-green-600');
@@ -727,11 +789,13 @@
                 groupElements.joinLeaveButton.querySelector('i').setAttribute('data-lucide', 'user-plus');
             }
             groupElements.joinLeaveButton.disabled = group.drawn;
+            groupElements.joinLeaveButton.classList.toggle('opacity-50', group.drawn);
+            groupElements.joinLeaveButton.classList.toggle('cursor-not-allowed', group.drawn);
             if(group.drawn) {
-                 groupElements.joinLeaveButton.classList.add('opacity-50', 'cursor-not-allowed');
                  groupElements.joinLeaveText.textContent = "Sorteio Realizado";
             }
 
+            // ... (Lógica das Ações de Admin - sem mudança) ...
             const userIsAdmin = group.adminId === currentUser.uid;
             if (userIsAdmin && !group.drawn) {
                 groupElements.adminActions.classList.remove('hidden');
@@ -740,12 +804,13 @@
                 const canDraw = count >= 3; 
                 
                 groupElements.drawButton.disabled = !canDraw;
+                groupElements.drawButton.classList.toggle('opacity-50', !canDraw);
+                groupElements.drawButton.classList.toggle('cursor-not-allowed', !canDraw);
+                
+                groupElements.drawError.textContent = '';
                 if (canDraw) {
-                    groupElements.drawButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                    groupElements.drawError.textContent = '';
                     groupElements.drawButton.querySelector('span').textContent = `Sortear (${count} pessoas)`;
                 } else {
-                    groupElements.drawButton.classList.add('opacity-50', 'cursor-not-allowed');
                     groupElements.drawButton.querySelector('span').textContent = "Sortear (Mínimo 3 pessoas)";
                     if (count < 3) {
                          groupElements.drawError.textContent = "Mínimo de 3 pessoas para sortear.";
@@ -755,6 +820,7 @@
                 groupElements.adminActions.classList.add('hidden');
             }
             
+            // Renderiza restrições INDIVIDUAIS
             groupElements.restrictionList.innerHTML = '';
             if (group.restrictions && group.restrictions.length > 0) {
                 group.restrictions.forEach(r => {
@@ -776,13 +842,38 @@
                 });
             }
 
+            // NOVO: Renderiza restrições de GRUPO
+            groupElements.restrictionGroupList.innerHTML = '';
+            if (group.restrictionGroups && group.restrictionGroups.length > 0) {
+                group.restrictionGroups.forEach((groupUids, index) => {
+                    const li = document.createElement('li');
+                    li.className = "flex justify-between items-center bg-gray-100 p-2 rounded";
+                    
+                    const names = groupUids.map(uid => getParticipantName(uid)).join(', ');
+                    
+                    li.innerHTML = `
+                        <span class="truncate pr-2" title="${names}">
+                            <i data-lucide="users" class="w-4 h-4 inline-block mr-2 text-gray-600"></i>
+                            ${names}
+                        </span>
+                        <button class="remove-restriction-group-button text-red-500 hover:text-red-700 flex-shrink-0" 
+                                data-group-index="${index}">
+                            <i data-lucide="x-circle" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                    groupElements.restrictionGroupList.appendChild(li);
+                });
+            }
+
+
+            // ... (Lógica dos Cards de Resultado/Espera - sem mudança) ...
             if (group.drawn) {
                 groupElements.adminActions.classList.add('hidden'); 
                 
                 if (userIsParticipant) {
                     const myPair = group.pairings[currentUser.uid];
                     if (myPair) {
-                        const revealedName = group.participants.find(p => p.uid === myPair)?.name || '???';
+                        const revealedName = getParticipantName(myPair);
                         groupElements.revealedPerson.textContent = revealedName;
                         groupElements.resultCard.classList.remove('hidden');
                         groupElements.waitingCard.classList.add('hidden');
@@ -805,30 +896,38 @@
             }
         }
         
-        // Botão de Entrar/Sair do Grupo (*** ATUALIZADO ***)
+        // Botão de Entrar/Sair do Grupo
         groupElements.joinLeaveButton.onclick = async () => {
             if (!currentUser || !currentGroup) return;
+            
+            // Garante que temos o nome mais atualizado do usuário
+            const participantName = currentUser.displayName || currentUser.email;
+            if (!participantName) {
+                console.error("Nome do usuário não encontrado. Abortando.");
+                groupElements.errorMessage.textContent = "Não foi possível identificar seu nome. Tente recarregar a página.";
+                return;
+            }
 
             const userIsParticipant = currentGroup.participants.some(p => p.uid === currentUser.uid);
             const userPayload = { 
                 uid: currentUser.uid, 
-                name: currentUser.displayName || currentUser.email 
+                name: participantName
             };
             const groupRef = doc(db, 'groups', currentGroup.id);
 
             try {
                 if (userIsParticipant) {
                     // Sair do grupo
-                    // TODO: Remover restrições associadas a este usuário
+                    // TODO: Idealmente, remover restrições associadas a este usuário
                     await updateDoc(groupRef, {
                         participants: arrayRemove(userPayload),
-                        participantUids: arrayRemove(currentUser.uid) // <-- NOVO
+                        participantUids: arrayRemove(currentUser.uid)
                     });
                 } else {
                     // Entrar no grupo
                     await updateDoc(groupRef, {
                         participants: arrayUnion(userPayload),
-                        participantUids: arrayUnion(currentUser.uid) // <-- NOVO
+                        participantUids: arrayUnion(currentUser.uid)
                     });
                 }
             } catch (error) {
@@ -837,16 +936,16 @@
             }
         };
 
-        // --- Lógica de Restrições (Nova) ---
+        // --- Lógica de Restrições ---
 
-        // Adicionar Restrição
+        // Adicionar Restrição INDIVIDUAL
         groupElements.addRestrictionButton.onclick = async () => {
-            // ... (código existente, sem mudanças) ...
             const giverUid = groupElements.restrictionGiver.value;
             const receiverUid = groupElements.restrictionReceiver.value;
+            groupElements.drawError.textContent = "";
 
             if (!giverUid || !receiverUid) {
-                groupElements.drawError.textContent = "Por favor, selecione as duas pessoas.";
+                groupElements.drawError.textContent = "Selecione as duas pessoas para a restrição individual.";
                 return;
             }
             
@@ -873,7 +972,6 @@
                 
                 groupElements.restrictionGiver.value = "";
                 groupElements.restrictionReceiver.value = "";
-                groupElements.drawError.textContent = ""; 
                 
             } catch (error) {
                 console.error("Erro ao adicionar restrição:", error);
@@ -881,9 +979,8 @@
             }
         };
         
-        // Remover Restrição (usando delegação de evento)
+        // Remover Restrição INDIVIDUAL (usando delegação de evento)
         groupElements.restrictionList.onclick = async (e) => {
-            // ... (código existente, sem mudanças) ...
             const removeButton = e.target.closest('.remove-restriction-button');
             if (removeButton) {
                 const giverUid = removeButton.dataset.giverUid;
@@ -907,15 +1004,66 @@
             }
         };
         
+        // NOVO: Adicionar Grupo de Restrição
+        groupElements.addRestrictionGroupButton.onclick = async () => {
+            const selectedCheckboxes = groupElements.restrictionGroupParticipants.querySelectorAll('input[type="checkbox"]:checked');
+            groupElements.drawError.textContent = "";
+            
+            const newGroupUids = Array.from(selectedCheckboxes).map(cb => cb.value);
 
-        // Botão de Sortear (ALGORITMO NOVO)
+            if (newGroupUids.length < 2) {
+                groupElements.drawError.textContent = "Selecione pelo menos 2 pessoas para formar um grupo.";
+                return;
+            }
+
+            const groupRef = doc(db, 'groups', currentGroup.id);
+            try {
+                await updateDoc(groupRef, {
+                    restrictionGroups: arrayUnion(newGroupUids)
+                });
+                // A UI será atualizada automaticamente pelo onSnapshot
+            } catch (error)
+            {
+                console.error("Erro ao adicionar grupo de restrição:", error);
+                groupElements.drawError.textContent = "Não foi possível adicionar o grupo.";
+            }
+        };
+
+        // NOVO: Remover Grupo de Restrição (usando delegação de evento)
+        groupElements.restrictionGroupList.onclick = async (e) => {
+             const removeButton = e.target.closest('.remove-restriction-group-button');
+             if (removeButton) {
+                const groupIndex = parseInt(removeButton.dataset.groupIndex, 10);
+                const restrictionGroups = currentGroup.restrictionGroups || [];
+                
+                const groupToRemove = restrictionGroups[groupIndex];
+
+                if (groupToRemove) {
+                    const groupRef = doc(db, 'groups', currentGroup.id);
+                    try {
+                        await updateDoc(groupRef, {
+                            restrictionGroups: arrayRemove(groupToRemove)
+                        });
+                    } catch (error) {
+                        console.error("Erro ao remover grupo de restrição:", error);
+                        groupElements.drawError.textContent = "Não foi possível remover o grupo.";
+                    }
+                }
+             }
+        };
+
+
+        // Botão de Sortear (ALGORITMO ATUALIZADO)
         groupElements.drawButton.onclick = async () => {
-            // ... (código existente, sem mudanças) ...
             if (!currentUser || !currentGroup || currentUser.uid !== currentGroup.adminId) return;
             
             const givers = [...currentGroup.participants]; 
             let receivers = [...currentGroup.participants]; 
-            const restrictions = currentGroup.restrictions || [];
+            
+            // ATUALIZADO: Pega os dois tipos de restrições
+            const singleRestrictions = currentGroup.restrictions || [];
+            const restrictionGroups = currentGroup.restrictionGroups || [];
+            
             const count = givers.length;
 
             if (count < 3) {
@@ -925,8 +1073,21 @@
             
             groupElements.drawError.textContent = "";
 
+            // ATUALIZADO: Função isRestricted verifica os dois tipos
             function isRestricted(giverUid, receiverUid) {
-                return restrictions.some(r => r.giverUid === giverUid && r.receiverUid === receiverUid);
+                // 1. Verifica restrições individuais (A não tira B)
+                const isSingleRestricted = singleRestrictions.some(
+                    r => r.giverUid === giverUid && r.receiverUid === receiverUid
+                );
+                if (isSingleRestricted) return true;
+
+                // 2. Verifica restrições de grupo (A e B estão no mesmo grupo)
+                const isGroupRestricted = restrictionGroups.some(group => 
+                    group.includes(giverUid) && group.includes(receiverUid)
+                );
+                if (isGroupRestricted) return true;
+
+                return false;
             }
 
             let pairings = {};
@@ -939,18 +1100,21 @@
                 pairings = {}; 
                 isValid = true; 
 
+                // Embaralha os recebedores
                 for (let i = receivers.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [receivers[i], receivers[j]] = [receivers[j], receivers[i]];
                 }
 
+                // Tenta formar os pares
                 for (let i = 0; i < givers.length; i++) {
                     const giver = givers[i];
                     const receiver = receivers[i];
 
+                    // Verifica auto-sorteio OU restrição
                     if (giver.uid === receiver.uid || isRestricted(giver.uid, receiver.uid)) {
                         isValid = false; 
-                        break; 
+                        break; // Para este loop 'for' e tenta embaralhar novamente
                     }
                     
                     pairings[giver.uid] = receiver.uid;
@@ -958,11 +1122,12 @@
             } // Fim do while
 
             if (!isValid) {
-                console.error("Não foi possível encontrar uma combinação válida após 1000 tentativas.");
+                console.error(`Não foi possível encontrar uma combinação válida após ${MAX_ATTEMPTS} tentativas.`);
                 groupElements.drawError.textContent = "Sorteio impossível com essas restrições. Tente remover algumas.";
                 return;
             }
             
+            // Salva no Firestore
             try {
                 const groupRef = doc(db, 'groups', currentGroup.id);
                 await updateDoc(groupRef, {
@@ -981,10 +1146,12 @@
         window.addEventListener('load', () => {
             handleHashChange();
             
+            // Tenta inicializar os ícones
             setTimeout(() => {
                 if (typeof lucide !== 'undefined') {
                     lucide.createIcons();
                 } else {
+                     // Tenta de novo se o script atrasou
                      setTimeout(() => {
                         if (typeof lucide !== 'undefined') {
                             lucide.createIcons();
@@ -1008,10 +1175,16 @@
                         showScreen('auth'); 
                     }
                 }
-            } else {
+            } else { // Se o hash estiver vazio ou for inválido
                  if (isAuthReady) { 
                     if (currentUser) {
-                        // *** MUDANÇA: Carrega os grupos ao voltar para home ***
+                        // Se estivermos em um grupo, precisamos parar de ouvi-lo
+                        if (currentGroupListener) {
+                            currentGroupListener();
+                            currentGroupListener = null;
+                        }
+                        currentGroup = null;
+                        
                         loadUserGroups(currentUser); 
                         showScreen('home');
                     } else {
@@ -1020,10 +1193,6 @@
                 }
             }
         };
-        
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
         
     </script>
 </body>
